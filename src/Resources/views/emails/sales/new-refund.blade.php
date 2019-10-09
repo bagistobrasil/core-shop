@@ -5,10 +5,12 @@
         </a>
     </div>
 
+    <?php $order = $refund->order; ?>
+
     <div style="padding: 30px;">
         <div style="font-size: 20px;color: #242424;line-height: 30px;margin-bottom: 34px;">
             <span style="font-weight: bold;">
-                {{ __('shop::app.mail.order.heading') }}
+                {{ __('shop::app.mail.refund.heading', ['order_id' => $order->increment_id, 'refund_id' => $refund->id]) }}
             </span> <br>
 
             <p style="font-size: 16px;color: #5E5E5E;line-height: 24px;">
@@ -25,43 +27,41 @@
         </div>
 
         <div style="font-weight: bold;font-size: 20px;color: #242424;line-height: 30px;margin-bottom: 20px !important;">
-            {{ __('shop::app.mail.order.summary') }}
+            {{ __('shop::app.mail.refund.summary') }}
         </div>
 
         <div style="display: flex;flex-direction: row;margin-top: 20px;justify-content: space-between;margin-bottom: 40px;">
-            @if ($order->shipping_address)
-                <div style="line-height: 25px;">
-                    <div style="font-weight: bold;font-size: 16px;color: #242424;">
-                        {{ __('shop::app.mail.order.shipping-address') }}
-                    </div>
-
-                    <div>
-                        {{ $order->shipping_address->name }}
-                    </div>
-
-                    <div>
-                        {{ $order->shipping_address->address1 }}, {{ $order->shipping_address->state }}
-                    </div>
-
-                    <div>
-                        {{ core()->country_name($order->shipping_address->country) }} {{ $order->shipping_address->postcode }}
-                    </div>
-
-                    <div>---</div>
-
-                    <div style="margin-bottom: 40px;">
-                        {{ __('shop::app.mail.order.contact') }} : {{ $order->shipping_address->phone }}
-                    </div>
-
-                    <div style="font-size: 16px;color: #242424;">
-                        {{ __('shop::app.mail.order.shipping') }}
-                    </div>
-
-                    <div style="font-weight: bold;font-size: 16px;color: #242424;">
-                        {{ $order->shipping_title }}
-                    </div>
+            <div style="line-height: 25px;">
+                <div style="font-weight: bold;font-size: 16px;color: #242424;">
+                    {{ __('shop::app.mail.order.shipping-address') }}
                 </div>
-            @endif
+
+                <div>
+                    {{ $order->shipping_address->name }}
+                </div>
+
+                <div>
+                    {{ $order->shipping_address->address1 }}, {{ $order->shipping_address->state }}
+                </div>
+
+                <div>
+                    {{ core()->country_name($order->shipping_address->country) }} {{ $order->shipping_address->postcode }}
+                </div>
+
+                <div>---</div>
+
+                <div style="margin-bottom: 40px;">
+                    {{ __('shop::app.mail.order.contact') }} : {{ $order->shipping_address->phone }}
+                </div>
+
+                <div style="font-size: 16px;color: #242424;">
+                    {{ __('shop::app.mail.order.shipping') }}
+                </div>
+
+                <div style="font-weight: bold;font-size: 16px;color: #242424;">
+                    {{ $order->shipping_title }}
+                </div>
+            </div>
 
             <div style="line-height: 25px;">
                 <div style="font-weight: bold;font-size: 16px;color: #242424;">
@@ -102,7 +102,6 @@
                 border-spacing: 0;width: 100%">
                     <thead>
                         <tr style="background-color: #f2f2f2">
-                            <th style="text-align: left;padding: 8px">{{ __('shop::app.customer.account.order.view.SKU') }}</th>
                             <th style="text-align: left;padding: 8px">{{ __('shop::app.customer.account.order.view.product-name') }}</th>
                             <th style="text-align: left;padding: 8px">{{ __('shop::app.customer.account.order.view.price') }}</th>
                             <th style="text-align: left;padding: 8px">{{ __('shop::app.customer.account.order.view.qty') }}</th>
@@ -110,29 +109,29 @@
                     </thead>
 
                     <tbody>
-                        @foreach ($order->items as $item)
+                        @foreach ($refund->items as $item)
                             <tr>
-                                <td data-value="{{ __('shop::app.customer.account.order.view.SKU') }}" style="text-align: left;padding: 8px">{{ $item->getTypeInstance()->getOrderedItem($item)->sku }}</td>
-
                                 <td data-value="{{ __('shop::app.customer.account.order.view.product-name') }}" style="text-align: left;padding: 8px">
                                     {{ $item->name }}
-                                    
-                                    @if (isset($item->additional['attributes']))
-                                        <div class="item-options">
-                                            
-                                            @foreach ($item->additional['attributes'] as $attribute)
-                                                <b>{{ $attribute['attribute_name'] }} : </b>{{ $attribute['option_label'] }}</br>
-                                            @endforeach
-
-                                        </div>
-                                    @endif
                                 </td>
 
-                                <td data-value="{{ __('shop::app.customer.account.order.view.price') }}" style="text-align: left;padding: 8px">{{ core()->formatPrice($item->price, $order->order_currency_code) }}
+                                <td data-value="{{ __('shop::app.customer.account.order.view.price') }}" style="text-align: left;padding: 8px">
+                                    {{ core()->formatPrice($item->price, $order->order_currency_code) }}
                                 </td>
 
-                                <td data-value="{{ __('shop::app.customer.account.order.view.qty') }}" style="text-align: left;padding: 8px">{{ $item->qty_ordered }}</td>
+                                <td data-value="{{ __('shop::app.customer.account.order.view.qty') }}" style="text-align: left;padding: 8px">
+                                    {{ $item->qty }}
+                                </td>
+
+                                @if ($html = $item->getOptionDetailHtml())
+                                    <div style="">
+                                        <label style="margin-top: 10px; font-size: 16px;color: #5E5E5E; display: block;">
+                                            {{ $html }}
+                                        </label>
+                                    </div>
+                                @endif
                             </tr>
+
                         @endforeach
                     </tbody>
                 </table>
@@ -143,31 +142,51 @@
             <div>
                 <span>{{ __('shop::app.mail.order.subtotal') }}</span>
                 <span style="float: right;">
-                    {{ core()->formatPrice($order->sub_total, $order->order_currency_code) }}
+                    {{ core()->formatPrice($refund->sub_total, $refund->order_currency_code) }}
                 </span>
             </div>
 
-            @if ($order->shipping_address)
+            @if ($refund->shipping_amount > 0)
                 <div>
                     <span>{{ __('shop::app.mail.order.shipping-handling') }}</span>
                     <span style="float: right;">
-                        {{ core()->formatPrice($order->shipping_amount, $order->order_currency_code) }}
+                        {{ core()->formatPrice($refund->shipping_amount, $refund->order_currency_code) }}
                     </span>
                 </div>
             @endif
 
-            <div>
-                <span>{{ __('shop::app.mail.order.tax') }}</span>
-                <span style="float: right;">
-                    {{ core()->formatPrice($order->tax_amount, $order->order_currency_code) }}
-                </span>
-            </div>
+            @if ($refund->tax_amount > 0)
+                <div>
+                    <span>{{ __('shop::app.mail.order.tax') }}</span>
+                    <span style="float: right;">
+                        {{ core()->formatPrice($refund->tax_amount, $refund->order_currency_code) }}
+                    </span>
+                </div>
+            @endif
 
-            @if ($order->discount_amount > 0)
+            @if ($refund->discount_amount > 0)
                 <div>
                     <span>{{ __('shop::app.mail.order.discount') }}</span>
                     <span style="float: right;">
-                        {{ core()->formatPrice($order->discount_amount, $order->order_currency_code) }}
+                        {{ core()->formatPrice($refund->discount_amount, $refund->order_currency_code) }}
+                    </span>
+                </div>
+            @endif
+
+            @if ($refund->adjustment_refund > 0)
+                <div>
+                    <span>{{ __('shop::app.mail.refund.adjustment-refund') }}</span>
+                    <span style="float: right;">
+                        {{ core()->formatPrice($refund->adjustment_refund, $refund->order_currency_code) }}
+                    </span>
+                </div>
+            @endif
+
+            @if ($refund->adjustment_fee > 0)
+                <div>
+                    <span>{{ __('shop::app.mail.refund.adjustment-fee') }}</span>
+                    <span style="float: right;">
+                        {{ core()->formatPrice($refund->adjustment_fee, $refund->order_currency_code) }}
                     </span>
                 </div>
             @endif
@@ -175,16 +194,12 @@
             <div style="font-weight: bold">
                 <span>{{ __('shop::app.mail.order.grand-total') }}</span>
                 <span style="float: right;">
-                    {{ core()->formatPrice($order->grand_total, $order->order_currency_code) }}
+                    {{ core()->formatPrice($refund->grand_total, $refund->order_currency_code) }}
                 </span>
             </div>
         </div>
 
-        <div style="margin-top: 65px;font-size: 16px;color: #5E5E5E;line-height: 24px;display: inline-block">
-            <p style="font-size: 16px;color: #5E5E5E;line-height: 24px;">
-                {{ __('shop::app.mail.order.final-summary') }}
-            </p>
-
+        <div style="margin-top: 65px;font-size: 16px;color: #5E5E5E;line-height: 24px;display: inline-block;width: 100%">
             <p style="font-size: 16px;color: #5E5E5E;line-height: 24px;">
                 {!!
                     __('shop::app.mail.order.help', [
